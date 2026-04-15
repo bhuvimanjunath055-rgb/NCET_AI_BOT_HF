@@ -1,6 +1,5 @@
 streamlit
-transformers
+transformers==4.57.5
 torch
 accelerate
-sentencepiece
-
+torchvision
