@@ -1,18 +1,6 @@
 import streamlit as st
 from transformers import pipeline
 
-# Load summarizer (lightweight model to avoid crash)
-@st.cache_resource
-def load_summarize():
-    try:
-        return pipeline("summarization", model="t5-small")
-    except Exception as e:
-        st.error(f"Model loading failed: {e}")
-        return None
-
-summarizer = load_summarize()
-
-# UI
 st.title("🤖 AI Text Summarizer")
 st.write("Enter a long text below, and get a concise summary!")
 
@@ -25,19 +13,23 @@ min_length = st.slider("Min Summary Length", 20, 100, 30)
 
 # Button
 if st.button("Summarize"):
-    if summarizer is None:
-        st.error("Model not loaded properly.")
-    elif not long_text.strip():
+    if not long_text.strip():
         st.warning("Please enter some text!")
     else:
         try:
-            summary = summarizer(
-                long_text,
-                max_length=max_length,
-                min_length=min_length,
-                do_sample=False
-            )
+            with st.spinner("Loading model... please wait ⏳"):
+                summarizer = pipeline("summarization", model="t5-small")
+
+            with st.spinner("Generating summary..."):
+                summary = summarizer(
+                    long_text,
+                    max_length=max_length,
+                    min_length=min_length,
+                    do_sample=False
+                )
+
             st.success("Summary:")
             st.write(summary[0]['summary_text'])
+
         except Exception as e:
-            st.error(f"Error during summarization: {e}")
+            st.error(f"Error: {e}")
