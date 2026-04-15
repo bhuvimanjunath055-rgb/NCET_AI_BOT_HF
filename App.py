@@ -1,34 +1,28 @@
 import streamlit as st
 from transformers import pipeline
 
-st.set_page_config(page_title="AI Text Summarizer")
-
-st.title("🤖 AI Text Summarizer")
-
+# Load the summarization model
 @st.cache_resource
-def load_model():
-    return pipeline(
-        "summarization",
-        model="sshleifer/distilbart-cnn-12-6",
-        device=-1  # CPU only (important for Streamlit Cloud)
-    )
+def load_summarize():
+    return pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
-summarizer = load_model()
+summarizer = load_summarize()
 
-text = st.text_area("Enter text to summarize")
+# Streamlit UI
+st.title("🤖 AI Text Summarizer")
+st.write("Enter a long text below, and get a concise summary!")
 
+# Text Input
+long_text = st.text_area("Enter text to summarize:", height=200)
+
+# Summary Parameters
+max_length = st.slider("Max Summary Length", min_value=50, max_value=300, value=130)
+min_length = st.slider("Min Summary Length", min_value=20, max_value=100, value=30)
+
+# Summarize Button
 if st.button("Summarize"):
-    if text.strip() == "":
-        st.warning("Please enter text")
+    if long_text:
+        summary = summarizer(long_text, max_length=max_length, min_length=min_length, do_sample=False)
+        st.write(summary[0]['summary_text'])
     else:
-        try:
-            result = summarizer(
-                text,
-                max_length=120,
-                min_length=30,
-                do_sample=False
-            )
-            st.success("Summary:")
-            st.write(result[0]["summary_text"])
-        except Exception as e:
-            st.error(f"Error: {e}")
+        st.warning("Please enter some text!")
