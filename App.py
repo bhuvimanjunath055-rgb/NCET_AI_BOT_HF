@@ -4,12 +4,17 @@ from transformers import pipeline
 st.title("🤖 AI Text Summarizer")
 st.write("Enter text below to summarize")
 
-# Load model ONCE safely
+# Load model safely (CPU only)
 @st.cache_resource
 def load_model():
     try:
-        return pipeline("summarization", model="t5-small")
+        return pipeline(
+            "summarization",
+            model="t5-small",
+            device=-1   # 🔴 force CPU (important)
+        )
     except Exception as e:
+        st.error(f"Model load error: {e}")
         return None
 
 summarizer = load_model()
@@ -17,23 +22,23 @@ summarizer = load_model()
 # Input
 long_text = st.text_area("Enter text:", height=200)
 
-# Sliders
-max_length = st.slider("Max Summary Length", 30, 150, 80)
-min_length = st.slider("Min Summary Length", 10, 80, 30)
+# Controls
+max_length = st.slider("Max Summary Length", 30, 120, 60)
+min_length = st.slider("Min Summary Length", 10, 60, 20)
 
 # Button
 if st.button("Summarize"):
 
     if summarizer is None:
-        st.error("Model failed to load.")
+        st.error("Model not loaded.")
     
     elif not long_text.strip():
         st.warning("Please enter some text!")
 
     else:
         try:
-            # 🔴 IMPORTANT: limit input size (prevents crash)
-            input_text = long_text[:500]
+            # 🔴 Limit input size (VERY IMPORTANT)
+            input_text = long_text[:300]
 
             with st.spinner("Summarizing..."):
                 summary = summarizer(
@@ -47,4 +52,4 @@ if st.button("Summarize"):
             st.write(summary[0]['summary_text'])
 
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Error during summarization: {e}")
